@@ -94,5 +94,3 @@ contract Token {
 
 
 }
-
-	
