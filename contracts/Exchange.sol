@@ -8,8 +8,16 @@ contract Exchange {
 	address public feeAccount;
 	uint256 public feePercent;
 	mapping(address => mapping(address => uint256)) public tokens;
+	mapping(uint256 => _Order) public orders; //Orders Mapping
+	uint256 public orderCount;
 
-	event Deposit(address token, address user, uint256 amount, uint256 balance);
+	event Deposit(
+		address token, 
+		address user, 
+		uint256 amount, 
+		uint256 balance
+	);
+
 	event Withdraw(
 		address token,
 		address user,
@@ -17,12 +25,36 @@ contract Exchange {
 		uint256 balance
 	);
 
+	event Order(
+		//Attributes of an oder
+		uint256 id, //Unique identifier for order
+		address user, // User who made order
+		address tokenGet, //Address of the token they receive
+		uint256 amountGet, //Amount they receive
+		address tokenGive, //Address ot the token they give
+		uint256 amountGive, //Amount they give
+		uint256 timestamp //When order was created
+	);
+
+	struct _Order{
+		//Attributes of an oder
+		uint256 id; //Unique identifier for order
+		address user; // User who made order
+		address tokenGet; //Address of the token they receive
+		uint256 amountGet; //Amount they receive
+		address tokenGive; //Address ot the token they give
+		uint256 amountGive; //Amount they give
+		uint256 timestamp; //When order was created
+	}
+
 	constructor(address _feeAccount, uint256 _feePercent) {
 		feeAccount = _feeAccount;
 		feePercent = _feePercent;
 	}
 
+	// ------------------------
 	// Deposit & withdraw tokens
+	// ------------------------
 	function depositToken(address _token, uint256 _amount) public {
 		//Transfer tokens to exchange
 		require(Token(_token).transferFrom(msg.sender, address(this), _amount));
@@ -57,6 +89,41 @@ contract Exchange {
 		returns (uint256)
 	{
 		return tokens[_token][_user];
+	}
+
+	// ------------------------
+	// MAKE & CANCEL ORDERE
+	// ------------------------
+
+	function makeOrder(
+		address _tokenGet, 
+		uint256 _amountGet, 
+		address _tokenGive, 
+		uint256 _amountGive
+	) public {
+		require(balanceOf(_tokenGive, msg.sender) >= _amountGive);
+
+		orderCount = orderCount + 1;
+		orders[orderCount] = _Order(
+			orderCount, //id
+			msg.sender, //user
+			_tokenGet, //tokenGet
+			_amountGet, //amountGet
+			_tokenGive, //tokenGive
+			_amountGive, //amountGive
+			block.timestamp //timestamp '1/1/2030 01:01:01' 1893507958 epox unix time
+		);
+
+		emit Order(
+			orderCount,
+			msg.sender,
+			_tokenGet,
+			_amountGet,
+			_tokenGive,
+			_amountGive,
+			block.timestamp
+		);
+		
 	}
 
 	// Depostit tokens - X
